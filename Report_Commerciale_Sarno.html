@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Report Commerciale Sarno Display</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:linear-gradient(135deg,#1F4E78,#4472C4);padding:20px;color:#333}
+.container{max-width:1350px;margin:0 auto;background:#fff;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.2);padding:40px}
+.header{text-align:center;margin-bottom:25px;border-bottom:3px solid #1F4E78;padding-bottom:20px}
+.header h1{color:#1F4E78;font-size:31px;margin-bottom:8px}
+.header p{color:#666;font-size:14px}
+.tabs{display:flex;gap:8px;margin-bottom:28px;border-bottom:2px solid #e0e0e0;flex-wrap:wrap}
+.tab-btn{padding:12px 20px;background:#fff;border:none;border-bottom:3px solid transparent;cursor:pointer;font-weight:600;color:#666;font-size:14px;transition:.2s}
+.tab-btn:hover{color:#1F4E78}
+.tab-btn.active{color:#1F4E78;border-bottom-color:#1F4E78}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:28px}
+.kpi4{grid-template-columns:repeat(4,1fr)}
+.kpi{background:#f7f9fc;border-radius:10px;padding:18px;text-align:center;border-top:4px solid #1F4E78}
+.kpi.orange{border-top-color:#ED7D31}.kpi.red{border-top-color:#C0392B}.kpi.green{border-top-color:#27ae60}
+.kpi .n{font-size:25px;font-weight:bold;color:#1F4E78}
+.kpi .l{font-size:12px;color:#666;margin-top:6px}
+.kpi .sub{font-size:12px;padding:4px 8px;border-radius:5px;display:inline-block;margin-top:6px;font-weight:600}
+.kpi .sub.down{background:#fdeae7;color:#C0392B}.kpi .sub.up{background:#e8f5e9;color:#27ae60}.kpi .sub.flat{background:#fef5e7;color:#e67e22}
+.chart-box{background:#fafafa;border-radius:10px;padding:20px;margin-bottom:28px;border:1px solid #eee}
+.chart-box h3{color:#1F4E78;margin-bottom:15px;font-size:16px}
+.chart-container{position:relative;height:320px}
+.section-title{font-size:18px;font-weight:bold;color:#1F4E78;margin:24px 0 14px;padding-bottom:8px;border-bottom:2px solid #e0e0e0}
+.controls{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+.sel{padding:9px 14px;border:2px solid #4472C4;border-radius:8px;font-size:14px;color:#1F4E78;font-weight:600;background:#fff;cursor:pointer;min-width:200px}
+.sel:focus{outline:none;border-color:#1F4E78}
+.fbtn{padding:8px 15px;border:2px solid #4472C4;background:#fff;color:#4472C4;border-radius:20px;cursor:pointer;font-weight:600;font-size:13px;transition:.2s}
+.fbtn:hover,.fbtn.active{background:#4472C4;color:#fff}
+.tbtn{padding:9px 16px;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px;background:#1F4E78;color:#fff;transition:.2s}
+.tbtn:hover{background:#2a5f92}
+.tbtn.sec{background:#eee;color:#555}
+
+/* HOME dropdown vista */
+.home-intro{background:#f0f5ff;border-left:4px solid #4472C4;padding:16px 20px;border-radius:6px;margin-bottom:22px}
+.home-intro p{font-size:13.5px;line-height:1.6;color:#555}
+
+/* Agente: righe compattabili */
+.agente-block{border:1px solid #ddd;border-radius:10px;margin-bottom:14px;overflow:hidden}
+.agente-head{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;background:#1F4E78;color:#fff;cursor:pointer}
+.agente-head:hover{background:#25588a}
+.agente-name{font-size:17px;font-weight:bold;display:flex;align-items:center;gap:10px}
+.agente-tot{display:flex;gap:24px;font-size:13px;align-items:center}
+.agente-tot .col{text-align:right}
+.agente-tot .lbl{font-size:10px;opacity:.8;text-transform:uppercase}
+.agente-tot .val{font-weight:700;font-size:15px;margin-top:2px}
+.agente-exp{font-size:13px;transition:.3s}
+.agente-block.open .agente-exp{transform:rotate(90deg)}
+.agente-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
+.agente-block.open .agente-body{max-height:8000px}
+.cli-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.cli-tbl th{background:#eef3fa;color:#1F4E78;padding:10px 8px;text-align:left;font-weight:600;font-size:11.5px;text-transform:uppercase;position:sticky;top:0}
+.cli-tbl th.num,.cli-tbl td.num{text-align:right}
+.cli-tbl th.ctr,.cli-tbl td.ctr{text-align:center}
+.cli-row{border-bottom:1px solid #eee;cursor:pointer}
+.cli-row:hover{background:#f5f8ff}
+.cli-row td{padding:9px 8px}
+.cli-name{font-weight:600;color:#1F4E78}
+.cli-detail{display:none;background:#fafbfc}
+.cli-detail.show{display:table-row}
+.cli-detail td{padding:14px 20px;border-bottom:2px solid #e8e8e8}
+.expand-ico{color:#4472C4;font-size:11px;margin-right:6px;display:inline-block;transition:.2s}
+.cli-row.open .expand-ico{transform:rotate(90deg)}
+.badge{padding:2px 8px;border-radius:4px;font-weight:700;font-size:11px;white-space:nowrap}
+.badge.up{background:#e8f5e9;color:#1e8449}.badge.down{background:#fdeae7;color:#c0392b}
+.badge.new{background:#e3f2fd;color:#1565c0}.badge.zero{background:#eee;color:#666}.badge.na{background:#f5f5f5;color:#aaa}
+.pot-pill{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase}
+.pot-pill.strategico{background:#f3e5f5;color:#8E44AD}.pot-pill.alto{background:#e8f5e9;color:#27ae60}
+.pot-pill.medio{background:#fef5e7;color:#F39C12}.pot-pill.basso{background:#eceff1;color:#78909c}.pot-pill.dubbio{background:#f5f5f5;color:#999}
+.opp-dot{display:inline-block;min-width:20px;text-align:center;background:#4472C4;color:#fff;border-radius:10px;font-size:11px;padding:1px 7px;font-weight:700}
+.opp-dot.zero{background:#ddd;color:#888}
+.note-block{margin-top:10px}
+.note-label{font-size:11px;font-weight:700;text-transform:uppercase;color:#8a6d00;background:#fff8e1;padding:2px 8px;border-radius:4px;display:inline-block;margin-bottom:4px}
+.note-label.stor{color:#1565c0;background:#e3f2fd}.note-label.prog{color:#2e7d32;background:#e8f5e9}
+.note-label.opp{color:#1565c0;background:#e3f2fd}.note-label.obj{color:#6a1b9a;background:#f3e5f5}.note-label.az{color:#00695c;background:#e0f2f1}
+.note-text{font-size:12.5px;line-height:1.6;color:#555}
+.andrea-box{margin-top:12px;background:#f0f5ff;border:1px dashed #4472C4;border-radius:8px;padding:12px}
+.andrea-box label{font-size:11px;font-weight:700;text-transform:uppercase;color:#1F4E78;display:block;margin-bottom:6px}
+.andrea-box textarea{width:100%;min-height:55px;border:1px solid #c5d3e8;border-radius:6px;padding:8px;font-family:inherit;font-size:12.5px;resize:vertical}
+.andrea-box textarea:focus{outline:none;border-color:#4472C4}
+
+/* Prodotti / cross-sell */
+.prod-flags{display:flex;gap:6px;flex-wrap:wrap}
+.pflag{width:26px;height:26px;border-radius:6px;border:2px solid #ddd;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:.15s;position:relative}
+.pflag:hover{border-color:#4472C4}
+.pflag.on{background:#4472C4;border-color:#4472C4;color:#fff}
+.prod-legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px;font-size:12px;color:#666}
+.prod-legend span{display:flex;align-items:center;gap:5px}
+.prod-legend .ic{width:22px;height:22px;border-radius:5px;background:#eef3fa;display:flex;align-items:center;justify-content:center;font-size:12px}
+.matrix{width:100%;border-collapse:collapse;font-size:12px}
+.matrix th{background:#1F4E78;color:#fff;padding:9px 6px;font-weight:600;font-size:11px}
+.matrix th.rot{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;height:90px;padding:6px 2px}
+.matrix td{padding:6px 8px;border-bottom:1px solid #eee;text-align:center}
+.matrix td.name{text-align:left;font-weight:600;color:#1F4E78;font-size:12px}
+.matrix tr:hover{background:#f5f8ff}
+.matrix .agtag{font-size:9px;color:#999;font-weight:normal;text-transform:uppercase;margin-left:4px}
+.mcell{cursor:pointer;font-size:15px;color:#ddd;user-select:none}
+.mcell.on{color:#27ae60}
+.crosshint{background:#fff8e1;border-left:4px solid #FFB300;padding:12px 18px;border-radius:6px;margin-bottom:16px;font-size:12.5px;color:#6d4c00;line-height:1.5}
+.footer{text-align:center;margin-top:35px;padding-top:20px;border-top:2px solid #e0e0e0;color:#999;font-size:12px}
+@media(max-width:768px){.kpi-row,.kpi4{grid-template-columns:repeat(2,1fr)}.agente-tot{gap:12px}}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>Report Commerciale Sarno Display</h1>
+<p>Fatturati, portafogli agenti e mappa prodotti per cross-selling</p>
+</div>
+
+<div class="tabs">
+<button class="tab-btn active" onclick="tab(event,'home')">🏠 Panoramica</button>
+<button class="tab-btn" onclick="tab(event,'agenti')">👥 Agenti &amp; Clienti</button>
+<button class="tab-btn" onclick="tab(event,'prodotti')">🏷️ Mappa Prodotti</button>
+<button class="tab-btn" onclick="tab(event,'gruppo')">📊 Fatturati Gruppo</button>
+</div>
+
+<div id="home" class="tab-content active">
+<div class="home-intro"><p>Seleziona un agente e un cliente per saltare rapidamente alla sua scheda. I totali si riferiscono al 2025 (chiuso) e al 2026 (forecast Elisa / YTD Martina).</p></div>
+<div class="controls">
+<select class="sel" id="homeAgente" onchange="popolaClienti()"><option value="">— Scegli agente —</option></select>
+<select class="sel" id="homeCliente"><option value="">— Scegli cliente —</option></select>
+<button class="tbtn" onclick="vaiACliente()">Vai alla scheda →</button>
+</div>
+<div class="kpi-row kpi4" id="homeKpi"></div>
+<div class="chart-box"><h3>Fatturato 2025 per agente</h3><div class="chart-container"><canvas id="chHome"></canvas></div></div>
+</div>
+
+<div id="agenti" class="tab-content">
+<div class="controls">
+<button class="tbtn sec" onclick="toggleAll(true)">Espandi tutti</button>
+<button class="tbtn sec" onclick="toggleAll(false)">Comprimi tutti</button>
+<button class="tbtn" onclick="salvaNote()">💾 Salva note</button>
+<button class="tbtn sec" onclick="esportaNote()">📋 Esporta note</button>
+</div>
+<div id="agentiList"></div>
+</div>
+
+<div id="prodotti" class="tab-content">
+<div class="crosshint">
+<b>Mappa prodotti per il cross-selling.</b> Spunta cosa già fornite (o potreste fornire) a ciascun cliente. Le celle vuote sui clienti importanti sono le opportunità di cross-sell. Le spunte si salvano su questo dispositivo.
+</div>
+<div class="controls">
+<select class="sel" id="prodAgente" onchange="renderMatrix()"><option value="all">Tutti gli agenti</option></select>
+<button class="tbtn" onclick="salvaProdotti()">💾 Salva mappa</button>
+<button class="tbtn sec" onclick="esportaCross()">📋 Esporta opportunità cross-sell</button>
+</div>
+<div class="prod-legend" id="prodLegend"></div>
+<div style="overflow-x:auto"><table class="matrix" id="matrixTbl"></table></div>
+</div>
+
+<div id="gruppo" class="tab-content">
+<div class="kpi-row">
+<div class="kpi"><div class="n">€16.36M</div><div class="l">2023</div></div>
+<div class="kpi orange"><div class="n">€16.13M</div><div class="l">2024</div></div>
+<div class="kpi red"><div class="n">€10.55M</div><div class="l">2025</div><div class="sub down">-34.6%</div></div>
+</div>
+<div class="chart-box"><h3>Andamento totale Sarno Display</h3><div class="chart-container"><canvas id="chGruppo"></canvas></div></div>
+<div class="controls">
+<button class="fbtn active" onclick="filtraG('all',this)">Tutti</button>
+<button class="fbtn" onclick="filtraG('up',this)">🟢 In crescita</button>
+<button class="fbtn" onclick="filtraG('down',this)">🔴 In calo</button>
+</div>
+<div id="groupsList"></div>
+</div>
+
+<div class="footer">
+<p>Fonti: Fatturati_Sarno_23-25.xlsx · Modelli incontro commerciale Elisa e Martina</p>
+<p>Note e mappa prodotti salvate localmente nel browser. Usa i pulsanti "Esporta" per portarle fuori.</p>
+</div>
+</div>
+
+<script>
+const SALES={"Elisa": [{"nome": "Giufra S.r.l.", "y2024": 1079469, "y2025": 958008, "y2026": 2650000, "ytd": 2272640, "opp": 4, "pot": "Strategico", "priorita": "", "storico": "Cliente dal 2019. Fornitura di mobili espositivi e couvette per il make-up Astra. Nel 2026 parte il restyling di couvette e mobili, con ordini gi\u00e0 aperti sul 2026-2027 per circa 4 milioni.", "progetti": "Strutture espositive permanenti e couvette per le linee Astra Make-up, Pure Beauty, Skin e Nails.", "opp_txt": "Nuovo banco 120 Astra Make-up (ott-nov 2026); couvette per i lanci make-up (set 2026); aggiornamento couvette Astra Skin (mar 2027).", "criticita": "", "obiettivo": "", "azione": "", "scadenza": ""}, {"nome": "Gaon S.r.l.", "y2024": 235005, "y2025": 311806, "y2026": 170206, "ytd": 157781, "opp": 4, "pot": "Medio", "priorita": "Alta", "storico": "Cliente dal 2019. Produzione di general tester e couvette per il make-up Mesauda.", "progetti": "Riordini di general tester e couvette, pi\u00f9 produzione di couvette per i nuovi lanci.", "opp_txt": "Quattro opportunit\u00e0 aperte per couvette legate a nuovi lanci.", "criticita": "In passato abbiamo perso le gare per wall e expo nails a causa di budget molto contenuti.", "obiettivo": "Capire le ragioni del calo dei volumi e le prospettive per fine anno e 2027.", "azione": "Visita a settembre per presentare il nuovo gruppo e proporre l'ampliamento dell'offerta su mobili e nails.", "scadenza": "31/09/2027"}, {"nome": "Sodalis Italy Industrial", "y2024": 513981, "y2025": 374853, "y2026": 307480, "ytd": 296167, "opp": 1, "pot": "Alto", "priorita": "Alta", "storico": "Cliente storico per POP e couvette Deborah. Il tentativo di ingresso su Bionike (gara general tester) \u00e8 andato perso per asta al ribasso.", "progetti": "Strutture espositive Deborah e Debby (make-up e nails) e couvette.", "opp_txt": "Una gara aperta per expo da terra durevole Goovi.", "criticita": "I nuovi banchi Debby e le relative couvette sono stati affidati a un altro fornitore: i riordini di couvette e banchi DY si esauriranno a breve.", "obiettivo": "A giugno abbiamo anticipato l'ingresso nel gruppo Iconia e chiesto di essere coinvolti in nuovi progetti, ricevendo il brief Goovi. Puntiamo a essere invitati alla gara per i nuovi banchi DH del 2027.", "azione": "Visite al cliente per la presentazione del nuovo gruppo.", "scadenza": "31/09/2027"}, {"nome": "Dr. Grandel Gmbh", "y2024": 45182, "y2025": 95561, "y2026": 0, "ytd": 0, "opp": 1, "pot": "Basso", "priorita": "Bassa", "storico": "Cliente con una produzione di un expo all'anno.", "progetti": "Expo da banco.", "opp_txt": "Un progetto per expo da banco modulare, attualmente in stand-by.", "criticita": "", "obiettivo": "", "azione": "", "scadenza": ""}, {"nome": "Wella Group", "y2024": 762841, "y2025": 548697, "y2026": 456130, "ytd": 272743, "opp": 0, "pot": "Alto", "priorita": "Media", "storico": "Cliente storico per la fornitura di carrelli Wella destinati ai saloni di parrucchieri.", "progetti": "Carrelli per parrucchieri.", "opp_txt": "", "criticita": "Diversi tentativi di proporci su altri brand e prodotti, finora senza esito.", "obiettivo": "Ampliare la gamma di brand e prodotti forniti.", "azione": "Comunicare l'ingresso nel gruppo Iconia.", "scadenza": "2026-12-31 00:00:00"}, {"nome": "Bottega S.p.A", "y2024": 0, "y2025": 0, "y2026": 13630, "ytd": 13630, "opp": 3, "pot": "Basso", "priorita": "Bassa", "storico": "Prospect dal 2025, con la produzione di due expo da banco prevista nel 2026.", "progetti": "Expo da banco per il duty free e glorifier per spumante.", "opp_txt": "Tre opportunit\u00e0 per expo da banco e una per expo da terra, valore complessivo circa 50k.", "criticita": "Azienda non abituata alla gestione del POP: processi lunghi e informazioni difficili da reperire.", "obiettivo": "Hanno diversi corner e partecipano a molte fiere: da valutare l'interesse.", "azione": "", "scadenza": ""}, {"nome": "Puig", "y2024": 0, "y2025": 0, "y2026": 0, "ytd": 0, "opp": 0, "pot": "Alto", "priorita": "Alta", "storico": "Cliente acquisito nel 2023 con la produzione di expo da banco.", "progetti": "Expo Paco Rabanne per Puig Italia.", "opp_txt": "", "criticita": "Rapporti attivi con la Spagna. La filiale italiana ci aveva coinvolti in un progetto box, poi messo in stand-by; ostacolo attuale il nuovo referente marketing Italia.", "obiettivo": "Presentare il gruppo per illustrare l'ampliamento dell'offerta.", "azione": "Gi\u00e0 concordata la presentazione del gruppo, presso Puig Madrid o nella nostra sede, al rientro dalle ferie.", "scadenza": "31/09/2027"}, {"nome": "Beauty San S.p.A.", "y2024": 0, "y2025": 0, "y2026": 0, "ytd": 0, "opp": 2, "pot": "Basso", "priorita": "", "storico": "Prospect. Due brief in sviluppo per expo da banco delle fragranze Jusbox.", "progetti": "Expo da banco Jusbox.", "opp_txt": "Due expo da banco Jusbox.", "criticita": "", "obiettivo": "", "azione": "", "scadenza": ""}, {"nome": "Coty Inc.", "y2024": 0, "y2025": 0, "y2026": 0, "ytd": 0, "opp": 1, "pot": "Alto", "priorita": "Alta", "storico": "Prospect. Dopo due RFI siamo stati contattati per un RFP su POP non durevole a livello mondiale.", "progetti": "POP e temporary merchandising (cardboard).", "opp_txt": "Una RFI per temporary merchandising globale (cardboard).", "criticita": "", "obiettivo": "Presentare il gruppo.", "azione": "", "scadenza": ""}, {"nome": "DOLCE & GABBANA BEAUTY SRL", "y2024": 10192, "y2025": 6998, "y2026": 0, "ytd": 0, "opp": 0, "pot": "Alto", "priorita": "", "storico": "", "progetti": "Glorifier e reglette Dolce & Gabbana.", "opp_txt": "", "criticita": "", "obiettivo": "", "azione": "", "scadenza": ""}, {"nome": "MARCHON", "y2024": 0, "y2025": 0, "y2026": 0, "ytd": 0, "opp": 0, "pot": "?", "priorita": "", "storico": "Contatto eyewear ancora da impostare.", "progetti": "", "opp_txt": "", "criticita": "", "obiettivo": "Definire un primo contatto e presentare il gruppo.", "azione": "", "scadenza": ""}, {"nome": "KERING EYEWEAR", "y2024": 0, "y2025": 0, "y2026": 0, "ytd": 0, "opp": 0, "pot": "?", "priorita": "", "storico": "Contatto eyewear ancora da impostare.", "progetti": "", "opp_txt": "", "criticita": "", "obiettivo": "Definire un primo contatto e presentare il gruppo.", "azione": "", "scadenza": ""}, {"nome": "Collistar", "y2024": 0, "y2025": 0, "y2026": 0, "ytd": 0, "opp": 0, "pot": "?", "priorita": "", "storico": "Cliente storico, perso nel 2022; fornitore attuale Diam Italia.", "progetti": "", "opp_txt": "", "criticita": "", "obiettivo": "Riallacciare il rapporto presentandoci come nuovo gruppo.", "azione": "Fissare un incontro a settembre per conoscere i nuovi referenti dell'ufficio acquisti.", "scadenza": ""}, {"nome": "LVMH Italia", "y2024": 0, "y2025": 0, "y2026": 0, "ytd": 0, "opp": 0, "pot": "?", "priorita": "", "storico": "Prospect. Siamo iscritti al portale fornitori Italia ma non abbiamo ancora sviluppato progetti.", "progetti": "", "opp_txt": "", "criticita": "", "obiettivo": "", "azione": "", "scadenza": ""}], "Martina": [{"nome": "EUROITALIA SRL", "y2024": 0, "y2025": 78529, "y2026": 293617, "ytd": 293617, "opp": 7, "pot": "Alto", "priorita": "", "storico": "Cliente dal 2010. General tester Naj Oleari e relativo sistema di couvette.", "progetti": "Couvette e riordini di strutture.", "opp_txt": "Sette opportunit\u00e0 aperte, il numero pi\u00f9 alto del portafoglio.", "criticita": "Cliente molto esigente, con pi\u00f9 interlocutrici, numerose campionature e sviluppo lento. La gara per il make-up Moschino non \u00e8 andata in porto; al di fuori di Naj Oleari non ci considerano per altri marchi.", "obiettivo": "", "azione": "", "scadenza": ""}, {"nome": "GROUPE CLARINS", "y2024": 92750, "y2025": 12688, "y2026": 15389, "ytd": 15389, "opp": 0, "pot": "Strategico", "priorita": "", "storico": "Cliente dal 2021. Couvette per i lanci del make-up Clarins.", "progetti": "Couvette.", "opp_txt": "", "criticita": "Cliente poco strutturato, molte campionature e richieste di tempi rapidi.", "obiettivo": "Unico cliente strategico senza opportunit\u00e0 aperte: presidiare il potenziale inattivo.", "azione": "", "scadenza": ""}, {"nome": "GIVE BACK BEAUTY", "y2024": 0, "y2025": 10050, "y2026": 0, "ytd": 0, "opp": 0, "pot": "Medio", "priorita": "", "storico": "Cliente dal 2021. Espositori da banco e da terra per i profumi Trussardi, Laura Biagiotti e Chiara Ferragni.", "progetti": "Display da banco.", "opp_txt": "", "criticita": "Risultiamo poco competitivi sui prezzi nelle gare.", "obiettivo": "", "azione": "", "scadenza": ""}, {"nome": "GOLDEN GROUP SRL", "y2024": 667900, "y2025": 46707, "y2026": 41287, "ytd": 41287, "opp": 2, "pot": "Medio", "priorita": "", "storico": "Cliente dal 2023. Espositori da terra e banchi make-up per il marchio Royal Beauty.", "progetti": "Display da terra e couvette.", "opp_txt": "Due opportunit\u00e0 aperte.", "criticita": "Cliente poco esperto, richiede tempi rapidi.", "obiettivo": "", "azione": "", "scadenza": ""}, {"nome": "GOTTARDO S.P.A.", "y2024": 0, "y2025": 0, "y2026": 0, "ytd": 0, "opp": 3, "pot": "Alto", "priorita": "", "storico": "Cliente dal 2025. In corso la produzione del banco make-up per la linea Scrush (marchio Tigot\u00e0).", "progetti": "Display e couvette.", "opp_txt": "Tre opportunit\u00e0 aperte.", "criticita": "Cliente poco esperto, sviluppo rallentato.", "obiettivo": "Far crescere un cliente nuovo e promettente.", "azione": "", "scadenza": ""}, {"nome": "KAO GROUP", "y2024": 0, "y2025": 2160, "y2026": 5110, "ytd": 5110, "opp": 0, "pot": "?", "priorita": "", "storico": "Cliente dal 2013.", "progetti": "Riordini di strutture.", "opp_txt": "", "criticita": "", "obiettivo": "Definire il potenziale del cliente.", "azione": "", "scadenza": ""}, {"nome": "SASU AHLEM", "y2024": 0, "y2025": 2671, "y2026": 0, "ytd": 0, "opp": 1, "pot": "?", "priorita": "", "storico": "Cliente dal 2025.", "progetti": "Astucci.", "opp_txt": "Una opportunit\u00e0 aperta.", "criticita": "Cliente esigente, sviluppo lento e bassa conversione.", "obiettivo": "", "azione": "", "scadenza": ""}, {"nome": "B.COSMETICS SRL", "y2024": 0, "y2025": 55085, "y2026": 15330, "ytd": 15330, "opp": 1, "pot": "Basso", "priorita": "", "storico": "Cliente dal 2025. Vasche Pinalli per il marchio espressOh.", "progetti": "Vasche e couvette.", "opp_txt": "Una opportunit\u00e0 aperta.", "criticita": "", "obiettivo": "", "azione": "", "scadenza": ""}, {"nome": "CGS SOCIETA' BENEFIT  SRL", "y2024": 0, "y2025": 5704, "y2026": 0, "ytd": 0, "opp": 0, "pot": "Basso", "priorita": "", "storico": "Cliente dal 2025. Espositore da banco per il marchio Teaology.", "progetti": "Display da banco.", "opp_txt": "", "criticita": "", "obiettivo": "", "azione": "", "scadenza": ""}, {"nome": "MARKWINS BEAUTY BRANDS INTL.", "y2024": 0, "y2025": 0, "y2026": 0, "ytd": 0, "opp": 1, "pot": "Medio", "priorita": "", "storico": "Rapporto datato, senza continuit\u00e0 recente.", "progetti": "Display da terra e couvette.", "opp_txt": "Una opportunit\u00e0 aperta.", "criticita": "Insoluto storico risalente a una ventina d'anni fa. Su un recente progetto abbiamo impiegato tre mesi per una modifica e non abbiamo pi\u00f9 avuto riscontro.", "obiettivo": "", "azione": "", "scadenza": ""}, {"nome": "NABLA COSMETICS SRL", "y2024": 181962, "y2025": 254682, "y2026": 178952, "ytd": 178952, "opp": 4, "pot": "Medio", "priorita": "", "storico": "Cliente dal 2019. General tester Nabla e relativo sistema di couvette.", "progetti": "Couvette e riordini di strutture.", "opp_txt": "Quattro opportunit\u00e0 aperte.", "criticita": "Non conformit\u00e0 e rotture hanno reso il cliente insoddisfatto: valuta di mettere in gara il rifacimento del sistema di couvette.", "obiettivo": "Recuperare la fiducia e difendere il rapporto.", "azione": "", "scadenza": ""}, {"nome": "UNIFARCO S.P.A.", "y2024": 482110, "y2025": 54241, "y2026": 139778, "ytd": 139778, "opp": 2, "pot": "Alto", "priorita": "", "storico": "Cliente dal 2013. General tester Dolomia e sistema di couvette, con una campagna di installazione nei punti vendita (2.000 pezzi nel 2023).", "progetti": "Display e couvette.", "opp_txt": "Due opportunit\u00e0 aperte.", "criticita": "Alcune non conformit\u00e0 sulla serigrafia delle couvette.", "obiettivo": "Riconquistare un cliente ad alto potenziale dopo il forte calo dei volumi.", "azione": "", "scadenza": ""}, {"nome": "3D MERCHANDISE SOLUTIONS LTD", "y2024": 0, "y2025": 0, "y2026": 0, "ytd": 0, "opp": 1, "pot": "Basso", "priorita": "", "storico": "Cliente dal 2025.", "progetti": "Packaging.", "opp_txt": "Una opportunit\u00e0 aperta.", "criticita": "", "obiettivo": "", "azione": "", "scadenza": ""}], "Barbara Ravasi": [{"nome": "RE-FORME", "y2024": 256495, "y2025": 96909, "y2026": 0, "ytd": 0, "opp": 10, "pot": "Medio", "priorita": "Alta", "storico": "Cliente dal 2022. Couvette e reglette per il canale farmacia.", "progetti": "Couvette e reglette per farmacia.", "opp_txt": "Dieci opportunit\u00e0 aperte, il cliente pi\u00f9 attivo del portafoglio.", "criticita": "Tempi stretti tra campionatura e produzione; listino da aggiornare.", "obiettivo": "Allargare la collaborazione oltre le couvette.", "azione": "", "scadenza": ""}, {"nome": "Alessi S.p.A", "y2024": 74800, "y2025": 7740, "y2026": 0, "ytd": 0, "opp": 1, "pot": "Medio", "priorita": "Media", "storico": "Cliente dal 2025. Materiale espositivo per il punto vendita.", "progetti": "Materiale espositivo per il punto vendita.", "opp_txt": "Una opportunit\u00e0 aperta.", "criticita": "Tempi lunghi.", "obiettivo": "", "azione": "", "scadenza": ""}, {"nome": "GDP S.r.l.", "y2024": 107578, "y2025": 144888, "y2026": 0, "ytd": 0, "opp": 1, "pot": "Medio", "priorita": "Media", "storico": "Cliente dal 2025. Expo da banco e da terra.", "progetti": "Expo da banco e da terra.", "opp_txt": "Una opportunit\u00e0 aperta.", "criticita": "", "obiettivo": "Aggiudicarsi gli expo per la gamma mascara.", "azione": "Tornare dal cliente a settembre per approfondire i nuovi expo.", "scadenza": ""}, {"nome": "Illycaff\u00e8 S.p.A.", "y2024": 32759, "y2025": 8397, "y2026": 0, "ytd": 0, "opp": 0, "pot": "?", "priorita": "Media", "storico": "Cliente dal 2016. Piccoli expo.", "progetti": "Piccoli expo.", "opp_txt": "", "criticita": "Marginalit\u00e0 basse.", "obiettivo": "", "azione": "", "scadenza": ""}, {"nome": "ROUGJ Group S.r.l.", "y2024": 0, "y2025": 109195, "y2026": 0, "ytd": 0, "opp": 2, "pot": "Basso", "priorita": "Media", "storico": "Cliente dal 2018. General tester e mobili per OVS.", "progetti": "General tester e mobili OVS.", "opp_txt": "Due opportunit\u00e0 aperte.", "criticita": "", "obiettivo": "Ottenere la conferma d'ordine.", "azione": "", "scadenza": ""}, {"nome": "Rudy Project S.p.A.", "y2024": 335648, "y2025": 95909, "y2026": 0, "ytd": 0, "opp": 1, "pot": "Medio", "priorita": "Bassa", "storico": "Cliente dal 2017. Linea completa di expo.", "progetti": "Linea completa expo.", "opp_txt": "Una opportunit\u00e0 aperta.", "criticita": "", "obiettivo": "Studiare nuovi expo.", "azione": "", "scadenza": ""}, {"nome": "Cellularline S.p.A.", "y2024": 0, "y2025": 0, "y2026": 0, "ytd": 0, "opp": 5, "pot": "Medio", "priorita": "Bassa", "storico": "Cliente dal 2025. Linea completa di expo.", "progetti": "Linea completa expo.", "opp_txt": "Cinque opportunit\u00e0 aperte.", "criticita": "", "obiettivo": "", "azione": "", "scadenza": ""}, {"nome": "Kiko", "y2024": 0, "y2025": 0, "y2026": 0, "ytd": 0, "opp": 2, "pot": "Strategico", "priorita": "Alta", "storico": "Cliente dal 2011. Expo e banchi.", "progetti": "Expo e banchi.", "opp_txt": "Due opportunit\u00e0 aperte.", "criticita": "Da un anno partecipiamo a tutte le gare; prima campionatura a luglio 2025.", "obiettivo": "Trasformare la partecipazione alle gare in primi ordini.", "azione": "Invitarli in Sarno.", "scadenza": ""}, {"nome": "Mayhoola", "y2024": 51843, "y2025": 39952, "y2026": 0, "ytd": 0, "opp": 0, "pot": "Basso", "priorita": "Bassa", "storico": "Cliente dal 2019 (gestito con Gatto Astucci). Copriabiti.", "progetti": "Copriabiti.", "opp_txt": "", "criticita": "", "obiettivo": "", "azione": "", "scadenza": ""}, {"nome": "Istituto Ganassini e Korff", "y2024": 0, "y2025": 0, "y2026": 0, "ytd": 0, "opp": 0, "pot": "Medio", "priorita": "", "storico": "Cliente dal 2018, azienda B Corp, passato di recente da Martina.", "progetti": "", "opp_txt": "", "criticita": "Mail di presentazione inviata, ancora senza risposta.", "obiettivo": "", "azione": "Organizzare un incontro a settembre.", "scadenza": ""}, {"nome": "Bellaoggi", "y2024": 0, "y2025": 2870, "y2026": 0, "ytd": 0, "opp": 0, "pot": "Basso", "priorita": "Bassa", "storico": "Cliente dal 2017. Couvette.", "progetti": "Couvette.", "opp_txt": "", "criticita": "", "obiettivo": "Riprendere i contatti.", "azione": "", "scadenza": ""}, {"nome": "Ferrero", "y2024": 6968, "y2025": 0, "y2026": 0, "ytd": 0, "opp": 2, "pot": "Strategico", "priorita": "Alta", "storico": "Cliente dal 2024. Expo per i sorpresari.", "progetti": "Expo per i sorpresari.", "opp_txt": "Due opportunit\u00e0 aperte.", "criticita": "", "obiettivo": "Consolidare un cliente strategico dall'alto potenziale.", "azione": "Organizzare un incontro a settembre.", "scadenza": ""}, {"nome": "Golden Lady", "y2024": 6182, "y2025": 17747, "y2026": 0, "ytd": 0, "opp": 0, "pot": "Basso", "priorita": "Bassa", "storico": "Cliente dal 2018. Couvette.", "progetti": "Couvette.", "opp_txt": "", "criticita": "", "obiettivo": "", "azione": "", "scadenza": ""}, {"nome": "Venchi", "y2024": 0, "y2025": 0, "y2026": 0, "ytd": 0, "opp": 1, "pot": "Strategico", "priorita": "Media", "storico": "Cliente dal 2025. Materiale espositivo per il punto vendita e mobili.", "progetti": "Materiale espositivo per il punto vendita e mobili.", "opp_txt": "Una opportunit\u00e0 aperta.", "criticita": "", "obiettivo": "Sviluppare un cliente strategico nuovo.", "azione": "Organizzare un incontro a settembre.", "scadenza": ""}, {"nome": "Davines", "y2024": 0, "y2025": 0, "y2026": 0, "ytd": 0, "opp": 2, "pot": "Strategico", "priorita": "Media", "storico": "Cliente dal 2025. Rebranding dei mobili per la linea Comfort Zone.", "progetti": "Rebranding mobili Comfort Zone.", "opp_txt": "Due opportunit\u00e0 aperte.", "criticita": "Relazione nuova da consolidare; tempi del cliente lunghi.", "obiettivo": "", "azione": "", "scadenza": ""}, {"nome": "Pinalli", "y2024": 0, "y2025": 0, "y2026": 0, "ytd": 0, "opp": 1, "pot": "Strategico", "priorita": "Media", "storico": "Cliente dal 2026. Rifacimento vasche.", "progetti": "Rifacimento vasche.", "opp_txt": "Una opportunit\u00e0 aperta.", "criticita": "", "obiettivo": "Avviare un cliente strategico appena acquisito.", "azione": "Organizzare un incontro a settembre.", "scadenza": ""}, {"nome": "Sheglam", "y2024": 7237, "y2025": 66549, "y2026": 0, "ytd": 0, "opp": 0, "pot": "?", "priorita": "Bassa", "storico": "Cliente dal 2025. Lancio di Sheglam Italia.", "progetti": "Lancio Sheglam Italia.", "opp_txt": "", "criticita": "Cliente poco affidabile.", "obiettivo": "", "azione": "", "scadenza": ""}, {"nome": "Pettenon", "y2024": 0, "y2025": 0, "y2026": 0, "ytd": 0, "opp": 0, "pot": "?", "priorita": "", "storico": "Cliente da qualificare.", "progetti": "", "opp_txt": "", "criticita": "", "obiettivo": "", "azione": "", "scadenza": ""}, {"nome": "Miamo", "y2024": 0, "y2025": 0, "y2026": 0, "ytd": 0, "opp": 0, "pot": "?", "priorita": "", "storico": "Cliente da qualificare.", "progetti": "", "opp_txt": "", "criticita": "", "obiettivo": "", "azione": "", "scadenza": ""}, {"nome": "Mavive", "y2024": 0, "y2025": 0, "y2026": 0, "ytd": 0, "opp": 0, "pot": "?", "priorita": "", "storico": "Cliente da qualificare.", "progetti": "", "opp_txt": "", "criticita": "", "obiettivo": "", "azione": "", "scadenza": ""}]};
+const GRUPPI=[{"nome": "CHANEL", "y2023": 2831967, "y2024": 3127231, "y2025": 2143862, "clienti": [{"nome": "Chanel Parfums Beaute'", "y2023": 2831967, "y2024": 3127231, "y2025": 2143862}]}, {"nome": "PININFARINA", "y2023": 0, "y2024": 593800, "y2025": 1680447, "clienti": [{"nome": "Signature S.R.L.", "y2023": 0, "y2024": 593800, "y2025": 1680447}]}, {"nome": "MARCHON", "y2023": 1135637, "y2024": 1922697, "y2025": 1345667, "clienti": [{"nome": "Marchon Eyewear Co. Inc", "y2023": 731362, "y2024": 1170030, "y2025": 1095594}, {"nome": "Marchon Europe B.V", "y2023": 274775, "y2024": 569442, "y2025": 249573}, {"nome": "Marchon Italia S.R.L.", "y2023": 0, "y2024": 0, "y2025": 500}, {"nome": "Marchon Eyewear (Hk) Ltd", "y2023": 41459, "y2024": 61991, "y2025": 0}, {"nome": "Allure Eyewear", "y2023": 67410, "y2024": 61410, "y2025": 0}, {"nome": "Marchon Japan K.K.", "y2023": 8370, "y2024": 29689, "y2025": 0}, {"nome": "Marchon Eyewear Australia Pty Ltd", "y2023": 12262, "y2024": 15453, "y2025": 0}, {"nome": "Sun Hing Optical Manufactoring Ltd", "y2023": 0, "y2024": 14683, "y2025": 0}]}, {"nome": "GIUFRA", "y2023": 1504767, "y2024": 1071393, "y2025": 966354, "clienti": [{"nome": "Giufra S.R.L.", "y2023": 1504767, "y2024": 1071393, "y2025": 966354}]}, {"nome": "PROCTER & GAMBLE", "y2023": 1132670, "y2024": 2636835, "y2025": 815326, "clienti": [{"nome": "Communisis Italia Srl", "y2023": 696224, "y2024": 870185, "y2025": 815326}, {"nome": "Procter & Gamble S.R.L.", "y2023": 436446, "y2024": 1763010, "y2025": 0}, {"nome": "Communisis Sverige Ab", "y2023": 0, "y2024": 3290, "y2025": 0}, {"nome": "Communisis Belgie Nv", "y2023": 0, "y2024": 350, "y2025": 0}]}, {"nome": "COTY", "y2023": -15671, "y2024": 762841, "y2025": 548697, "clienti": [{"nome": "Wella International Op", "y2023": 2334, "y2024": 762296, "y2025": 547693}, {"nome": "Welonda Deutschland Gmbh", "y2023": 370, "y2024": 545, "y2025": 1004}, {"nome": "Hfc Prestige International Operation", "y2023": -18375, "y2024": 0, "y2025": 0}]}, {"nome": "Nessun Gruppo", "y2023": 277609, "y2024": 298482, "y2025": 498273, "clienti": [{"nome": "Gdp Srl", "y2023": 0, "y2024": 0, "y2025": 120250}, {"nome": "Dr. Grandel Gmbh", "y2023": 28290, "y2024": 45182, "y2025": 95561}, {"nome": "Alessi Spa Societa Benefit", "y2023": 0, "y2024": 0, "y2025": 74800}, {"nome": "B.Cosmetics Srl", "y2023": 0, "y2024": 0, "y2025": 55085}, {"nome": "L'Erbolario Srl", "y2023": 11550, "y2024": 13720, "y2025": 32375}, {"nome": "Geogeo Srl", "y2023": 61553, "y2024": 0, "y2025": 22004}, {"nome": "Liyu Italia S.R.L.", "y2023": 0, "y2024": 0, "y2025": 20000}, {"nome": "Sas Orientis Gourmet", "y2023": 2812, "y2024": 7675, "y2025": 16040}, {"nome": "Modellando Srl", "y2023": 0, "y2024": 0, "y2025": 7750}, {"nome": "Ottica Pregliasco Sas", "y2023": 0, "y2024": 0, "y2025": 7750}, {"nome": "Meditteranea Cosmetics Srl Sb", "y2023": 0, "y2024": 0, "y2025": 6400}, {"nome": "Golden Lady Company Spa", "y2023": 0, "y2024": 30765, "y2025": 6182}, {"nome": "Cgs Societa' Benefit  Srl", "y2023": 0, "y2024": 0, "y2025": 5704}, {"nome": "Visioptis Sas", "y2023": 3600, "y2024": 7790, "y2025": 4425}, {"nome": "Sas My Jolie", "y2023": 0, "y2024": 0, "y2025": 3220}, {"nome": "Sasu Ahlem", "y2023": 0, "y2024": 0, "y2025": 2671}, {"nome": "Euracom Srl", "y2023": 7050, "y2024": 27250, "y2025": 2650}, {"nome": "Dick Moby B.V.", "y2023": 0, "y2024": 0, "y2025": 2618}, {"nome": "Ecm Recuperi S.R.L.", "y2023": 2062, "y2024": 1554, "y2025": 2443}, {"nome": "Trisa Accessories Ag", "y2023": 0, "y2024": 0, "y2025": 2323}, {"nome": "Metrans S.R.L.", "y2023": 0, "y2024": 0, "y2025": 1802}, {"nome": "Leonardo Ausilionline Srl", "y2023": 0, "y2024": 0, "y2025": 1260}, {"nome": "United Creation Optical Co Ltd", "y2023": 0, "y2024": 1200, "y2025": 1200}, {"nome": "Grenion Gmbh", "y2023": 27150, "y2024": 50376, "y2025": 1183}, {"nome": "Effe.C. S.R.L. Elettrauto Autorip.", "y2023": 0, "y2024": 0, "y2025": 850}, {"nome": "Ital Lenti Srl", "y2023": 0, "y2024": 0, "y2025": 660}, {"nome": "Crippa Fernando S.R.L.", "y2023": 0, "y2024": 0, "y2025": 462}, {"nome": "Strangelove Nyc", "y2023": 0, "y2024": 2212, "y2025": 275}, {"nome": "Eyecon Srl", "y2023": 0, "y2024": 0, "y2025": 230}, {"nome": "Socaf S.P.A", "y2023": 0, "y2024": 0, "y2025": 100}, {"nome": "Laboratoire Gilbert Cosmetique Sas", "y2023": 0, "y2024": 73025, "y2025": 0}, {"nome": "D'Orica Srl Soc. Benefit", "y2023": 3970, "y2024": 12606, "y2025": 0}, {"nome": "Essentia Beauty Srl", "y2023": 0, "y2024": 12400, "y2025": 0}, {"nome": "Goldenpoint Spa", "y2023": 10546, "y2024": 5210, "y2025": 0}, {"nome": "British American Tobacco Italia Spa", "y2023": 0, "y2024": 4174, "y2025": 0}, {"nome": "Fondimpresa", "y2023": 5878, "y2024": 1802, "y2025": 0}, {"nome": "Lalique Sa", "y2023": 0, "y2024": 650, "y2025": 0}, {"nome": "Unicosmed Gmbh", "y2023": 0, "y2024": 370, "y2025": 0}, {"nome": "Sabbioni Profumi S.R.L", "y2023": 0, "y2024": 280, "y2025": 0}, {"nome": "Brioni Teknics  Di  Brioni Luca", "y2023": 0, "y2024": 200, "y2025": 0}, {"nome": "Vincit Srl", "y2023": 0, "y2024": 40, "y2025": 0}, {"nome": "Cielo Venezia 1270 Spa", "y2023": 36699, "y2024": 0, "y2025": 0}, {"nome": "Desire Fragrances Srl", "y2023": 20000, "y2024": 0, "y2025": 0}, {"nome": "So.Di.Co Srl", "y2023": 13600, "y2024": 0, "y2025": 0}, {"nome": "Pinalli Srl Unipersonale", "y2023": 10900, "y2024": 0, "y2025": 0}, {"nome": "Eurostyle Spa", "y2023": 6900, "y2024": 0, "y2025": 0}, {"nome": "Nea Display Srl", "y2023": 6500, "y2024": 0, "y2025": 0}, {"nome": "Avm 1959 Spa", "y2023": 6150, "y2024": 0, "y2025": 0}, {"nome": "Sironi S.A.S. Di Sironi Annamaria & C.", "y2023": 5000, "y2024": 0, "y2025": 0}, {"nome": "Caldara Plast S.R.L.", "y2023": 2934, "y2024": 0, "y2025": 0}, {"nome": "Nesperta Europe Sp Z.O.O.", "y2023": 2000, "y2024": 0, "y2025": 0}, {"nome": "Sas Thom", "y2023": 1400, "y2024": 0, "y2025": 0}, {"nome": "Clinica Veterinaria Ccmv Srl", "y2023": 450, "y2024": 0, "y2025": 0}, {"nome": "Consorzio Mib Trieste", "y2023": 375, "y2024": 0, "y2025": 0}, {"nome": "Fratelli Criscuolo S.N.C.", "y2023": 240, "y2024": 0, "y2025": 0}]}, {"nome": "SODALIS GROUP", "y2023": 1079488, "y2024": 513981, "y2025": 374853, "clienti": [{"nome": "Deborah  Group S.R.L.", "y2023": 1079488, "y2024": 513981, "y2025": 374853}]}, {"nome": "Argos Wityu", "y2023": 779623, "y2024": 359056, "y2025": 340100, "clienti": [{"nome": "Sas Produits Berger", "y2023": 779623, "y2024": 359056, "y2025": 340100}]}, {"nome": "VERALAB", "y2023": 665684, "y2024": 574109, "y2025": 324698, "clienti": [{"nome": "Re-Forme Srl", "y2023": 665684, "y2024": 574109, "y2025": 324698}]}, {"nome": "GAON", "y2023": 0, "y2024": 235005, "y2025": 311806, "clienti": [{"nome": "Gaon Srl", "y2023": 0, "y2024": 235005, "y2025": 311806}]}, {"nome": "NABLA", "y2023": 171207, "y2024": 181962, "y2025": 254682, "clienti": [{"nome": "Nabla Cosmetics Srl", "y2023": 171207, "y2024": 181962, "y2025": 254682}]}, {"nome": "GANASSINI", "y2023": 272772, "y2024": 145886, "y2025": 143280, "clienti": [{"nome": "Korff Srl", "y2023": 272772, "y2024": 89335, "y2025": 71725}, {"nome": "Istituto Ganassini Spa", "y2023": 0, "y2024": 56551, "y2025": 71555}]}, {"nome": "SILHOUETTE", "y2023": 449253, "y2024": 1068869, "y2025": 140395, "clienti": [{"nome": "Silhouette International Schmied Ag", "y2023": 449253, "y2024": 1068869, "y2025": 140395}]}, {"nome": "UNIFARCO", "y2023": 2780628, "y2024": 532710, "y2025": 106240, "clienti": [{"nome": "Unifarco S.P.A.", "y2023": 2745523, "y2024": 482110, "y2025": 70925}, {"nome": "Unifarco Deutschland Gmbh", "y2023": 35105, "y2024": 50600, "y2025": 35315}]}, {"nome": "INTERCOMPANY", "y2023": 136889, "y2024": 190755, "y2025": 105650, "clienti": [{"nome": "Gatto Astucci S.P.A.", "y2023": 40112, "y2024": 115051, "y2025": 54681}, {"nome": "Gatto Display S.R.L.", "y2023": 53932, "y2024": 54122, "y2025": 39026}, {"nome": "Gatto Astucci Spa", "y2023": 0, "y2024": 0, "y2025": 7095}, {"nome": "Gatto Usa Inc", "y2023": 4972, "y2024": 0, "y2025": 4848}, {"nome": "Wuxi Brothers Packaging Co.Ltd.", "y2023": 37873, "y2024": 21582, "y2025": 0}]}, {"nome": "CLARINS GROUP", "y2023": 19925, "y2024": 118610, "y2025": 87643, "clienti": [{"nome": "Laboratoires Clarins Sas", "y2023": 4598, "y2024": 25860, "y2025": 74955}, {"nome": "Clarins Italia Spa", "y2023": 15327, "y2024": 92750, "y2025": 12688}]}, {"nome": "EUROITALIA", "y2023": 336581, "y2024": 325957, "y2025": 78529, "clienti": [{"nome": "Euroitalia S.R.L.", "y2023": 336581, "y2024": 325957, "y2025": 78529}]}, {"nome": "RUDY PROJECT", "y2023": 77733, "y2024": 92550, "y2025": 50000, "clienti": [{"nome": "Rudy Project Spa", "y2023": 77733, "y2024": 92550, "y2025": 50000}]}, {"nome": "GOLDEN GROUP", "y2023": 560828, "y2024": 667900, "y2025": 46707, "clienti": [{"nome": "Golden Group Srl", "y2023": 560828, "y2024": 667900, "y2025": 46707}]}, {"nome": "SHISEIDO", "y2023": 35218, "y2024": 390168, "y2025": 42419, "clienti": [{"nome": "Beaute Prestige International Sas", "y2023": 6824, "y2024": 322628, "y2025": 37645}, {"nome": "Shiseido Italy Spa", "y2023": 0, "y2024": 64600, "y2025": 4774}, {"nome": "Shiseido Germany Gmbh", "y2023": 0, "y2024": 2940, "y2025": 0}, {"nome": "Sas Gallinee", "y2023": 28394, "y2024": 0, "y2025": 0}]}, {"nome": "ILLY", "y2023": 6040, "y2024": 6037, "y2025": 38796, "clienti": [{"nome": "Illy Caffe Spa", "y2023": 3, "y2024": 0, "y2025": 32759}, {"nome": "Tosolini Federico", "y2023": 6037, "y2024": 6037, "y2025": 6037}]}, {"nome": "LVMH", "y2023": 109820, "y2024": 19115, "y2025": 33768, "clienti": [{"nome": "Thelios Spa", "y2023": 109240, "y2024": 16580, "y2025": 33688}, {"nome": "Sasu Thelios France", "y2023": 580, "y2024": 2535, "y2025": 80}]}, {"nome": "KERING", "y2023": 48307, "y2024": 35657, "y2025": 19830, "clienti": [{"nome": "Kering Eyewear S.P.A.", "y2023": 26750, "y2024": 33042, "y2025": 18870}, {"nome": "Dodo Srl", "y2023": 0, "y2024": 0, "y2025": 960}, {"nome": "Pomellato S.P.A.", "y2023": 21557, "y2024": 2180, "y2025": 0}, {"nome": "Trenti Industria Occhiali Spa", "y2023": 0, "y2024": 435, "y2025": 0}]}, {"nome": "DERIGO", "y2023": 0, "y2024": 0, "y2025": 17280, "clienti": [{"nome": "De Rigo Vision Spa", "y2023": 0, "y2024": 0, "y2025": 17280}]}, {"nome": "GRUPPO ANGELINI", "y2023": 81610, "y2024": 227408, "y2025": 10050, "clienti": [{"nome": "Angelini Beauty Spa", "y2023": 81610, "y2024": 227408, "y2025": 10050}]}, {"nome": "FERRERO", "y2023": 0, "y2024": 4000, "y2025": 9968, "clienti": [{"nome": "Soremartec  Sa", "y2023": 0, "y2024": 4000, "y2025": 9968}]}, {"nome": "DOLCE & GABBANA", "y2023": 219520, "y2024": 10192, "y2025": 6998, "clienti": [{"nome": "Dolce & Gabbana Beauty Srl", "y2023": 219520, "y2024": 10192, "y2025": 6998}]}, {"nome": "LEGRAND", "y2023": 16990, "y2024": 0, "y2025": 6796, "clienti": [{"nome": "Bticino S.P.A.", "y2023": 16990, "y2024": 0, "y2025": 6796}]}, {"nome": "KAO GROUP", "y2023": 11750, "y2024": 2950, "y2025": 2160, "clienti": [{"nome": "Kanebo Cosmetics (Europe) Ltd", "y2023": 11750, "y2024": 2950, "y2025": 2160}]}, {"nome": "CHIESI FARMACEUTICI", "y2023": 59117, "y2024": 17860, "y2025": 0, "clienti": [{"nome": "Chiesi Italia Spa", "y2023": 59117, "y2024": 17860, "y2025": 0}]}, {"nome": "OCEAN TERRE BIOTECHNOLOGIE", "y2023": 202391, "y2024": 0, "y2025": 0, "clienti": [{"nome": "Sas Ocean Terre Biotechnologie", "y2023": 202391, "y2024": 0, "y2025": 0}]}, {"nome": "BOLTON GROUP", "y2023": 87960, "y2024": 0, "y2025": 0, "clienti": [{"nome": "Collistar S.P.A.", "y2023": 87960, "y2024": 0, "y2025": 0}]}, {"nome": "PUIG", "y2023": 36000, "y2024": 0, "y2025": 0, "clienti": [{"nome": "Puig Italia Srl", "y2023": 36000, "y2024": 0, "y2025": 0}]}, {"nome": "LUXOTTICA", "y2023": 750, "y2024": 0, "y2025": 0, "clienti": [{"nome": "Luxottica S.R.L.", "y2023": 750, "y2024": 0, "y2025": 0}]}, {"nome": "MAYHOOLA", "y2023": 340, "y2024": 0, "y2025": 0, "clienti": [{"nome": "Akoni Sa", "y2023": 340, "y2024": 0, "y2025": 0}]}];
+const PRODUCTS=["Packaging", "General Tester", "Windows", "Wall Unit", "Display", "Couvette"];
+const PROD_ICONS={"Packaging": "\ud83d\udce6", "General Tester": "\ud83e\uddea", "Windows": "\ud83e\ude9f", "Wall Unit": "\ud83e\uddf1", "Display": "\ud83d\uddbc\ufe0f", "Couvette": "\ud83c\udfa8"};
+const TOT=[16355043,16134015,10551274];
+const COL_LABELS={'Elisa':['2024','2025','Forecast 26'],'Martina':['2024','2025','2026 YTD'],'Barbara Ravasi':['Anno prec.','Ultimo anno','—']};
+function colLabels(ag){return COL_LABELS[ag]||['2024','2025','2026'];}
+
+function tab(e,id){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  e.currentTarget.classList.add('active');
+}
+function fmtK(n){return n>=1e6?'€'+(n/1e6).toFixed(2)+'M':n>=1000?'€'+Math.round(n/1e3)+'K':(n>0?'€'+Math.round(n):'—')}
+function potcls(p){return {'Strategico':'strategico','Alto':'alto','Medio':'medio','Basso':'basso'}[p]||'dubbio'}
+function trendBadge(y25,y26,isForecast){
+  if(y25>0&&y26>0){const v=(y26-y25)/y25*100;const suf=isForecast?' fc':'';
+    if(v>5)return `<span class="badge up">▲ +${v.toFixed(0)}%${suf}</span>`;
+    if(v<-5)return `<span class="badge down">▼ ${v.toFixed(0)}%${suf}</span>`;
+    return `<span class="badge na">≈ ${v.toFixed(0)}%${suf}</span>`;}
+  if(y26>0&&y25===0)return '<span class="badge new">nuovo/prospect</span>';
+  if(y25>0&&y26===0)return '<span class="badge zero">no dato 26</span>';
+  return '<span class="badge na">prospect</span>';
+}
+
+// ---------- HOME ----------
+function initHome(){
+  const selA=document.getElementById('homeAgente');
+  const selPA=document.getElementById('prodAgente');
+  Object.keys(SALES).forEach(a=>{
+    selA.innerHTML+=`<option value="${a}">${a}</option>`;
+    selPA.innerHTML+=`<option value="${a}">${a}</option>`;
+  });
+  // KPI
+  let kpi='';
+  Object.entries(SALES).forEach(([a,cl])=>{
+    const t25=cl.reduce((s,c)=>s+c.y2025,0);
+    const t26=cl.reduce((s,c)=>s+c.y2026,0);
+    kpi+=`<div class="kpi"><div class="n">€${(t25/1000).toFixed(0)}K</div><div class="l">${a} — 2025 (${cl.length} clienti)</div><div class="sub ${t26>t25?'up':'down'}">2026: €${(t26/1000).toFixed(0)}K</div></div>`;
+  });
+  document.getElementById('homeKpi').innerHTML=kpi;
+}
+function popolaClienti(){
+  const a=document.getElementById('homeAgente').value;
+  const selC=document.getElementById('homeCliente');
+  selC.innerHTML='<option value="">— Scegli cliente —</option>';
+  if(a&&SALES[a]){
+    [...SALES[a]].sort((x,y)=>y.y2025-x.y2025).forEach(c=>{
+      selC.innerHTML+=`<option value="${c.nome}">${c.nome} (${fmtK(c.y2025)})</option>`;
+    });
+  }
+}
+function vaiACliente(){
+  const a=document.getElementById('homeAgente').value;
+  const c=document.getElementById('homeCliente').value;
+  if(!a)return;
+  document.querySelector('.tab-btn[onclick*="agenti"]').click();
+  renderAgenti();
+  // apri agente
+  const ab=document.getElementById('ag_'+a);
+  if(ab){ab.classList.add('open');
+    if(c){setTimeout(()=>{
+      const row=document.getElementById('cli_'+a+'_'+btoa(unescape(encodeURIComponent(c))).replace(/=/g,''));
+      if(row){row.classList.add('open');const d=row.nextElementSibling;if(d)d.classList.add('show');row.scrollIntoView({behavior:'smooth',block:'center'});}
+    },100);}
+  }
+}
+
+// ---------- AGENTI ----------
+function renderAgenti(){
+  const savedN=JSON.parse(localStorage.getItem('note_andrea_v3')||'{}');
+  let h='';
+  Object.entries(SALES).forEach(([ag,cl])=>{
+    const t24=cl.reduce((s,c)=>s+c.y2024,0);
+    const t25=cl.reduce((s,c)=>s+c.y2025,0);
+    const t26=cl.reduce((s,c)=>s+c.y2026,0);
+    const isFC = ag==='Elisa';
+    let rows='';
+    [...cl].sort((x,y)=>y.y2025-x.y2025).forEach(c=>{
+      const cid=ag+'_'+btoa(unescape(encodeURIComponent(c.nome))).replace(/=/g,'');
+      const badge=trendBadge(c.y2025,c.y2026,isFC);
+      const pill=`<span class="pot-pill ${potcls(c.pot)}">${c.pot}</span>`;
+      const opp=`<span class="opp-dot ${c.opp===0?'zero':''}">${c.opp}</span>`;
+      rows+=`<tr class="cli-row" id="cli_${cid}" onclick="toggleCli('${cid}')">
+        <td class="cli-name"><span class="expand-ico">▶</span>${c.nome}</td>
+        <td class="num">${fmtK(c.y2024)}</td>
+        <td class="num">${fmtK(c.y2025)}</td>
+        <td class="num">${colLabels(ag)[2]==='—'?'—':fmtK(c.y2026)}</td>
+        <td class="ctr">${badge}</td>
+        <td class="ctr">${opp}</td>
+        <td class="ctr">${pill}</td>
+      </tr>`;
+      // dettaglio
+      let d='';
+      if(c.storico)d+=`<div class="note-block"><span class="note-label stor">Storico</span><div class="note-text">${c.storico}</div></div>`;
+      if(c.progetti)d+=`<div class="note-block"><span class="note-label prog">Progetti</span><div class="note-text">${c.progetti}</div></div>`;
+      if(c.opp_txt)d+=`<div class="note-block"><span class="note-label opp">Opportunità</span><div class="note-text">${c.opp_txt.replace(/\n/g,'<br>')}</div></div>`;
+      if(c.criticita)d+=`<div class="note-block"><span class="note-label">Criticità / Rischi</span><div class="note-text">${c.criticita}</div></div>`;
+      if(c.obiettivo)d+=`<div class="note-block"><span class="note-label obj">Obiettivo</span><div class="note-text">${c.obiettivo.replace(/\n/g,'<br>')}</div></div>`;
+      if(c.azione)d+=`<div class="note-block"><span class="note-label az">Prossima azione</span><div class="note-text">${c.azione}${c.scadenza?' <b>('+c.scadenza+')</b>':''}</div></div>`;
+      d+=`<div class="andrea-box"><label>✍️ Note Andrea</label><textarea data-cli="${ag}||${c.nome}" placeholder="Le tue note...">${savedN[ag+'||'+c.nome]||''}</textarea></div>`;
+      rows+=`<tr class="cli-detail"><td colspan="7">${d}</td></tr>`;
+    });
+    h+=`<div class="agente-block" id="ag_${ag}">
+      <div class="agente-head" onclick="document.getElementById('ag_${ag}').classList.toggle('open')">
+        <div class="agente-name"><span class="agente-exp">▶</span>${ag} <span style="font-weight:400;opacity:.85;font-size:13px">· ${cl.length} clienti</span></div>
+        <div class="agente-tot">
+          <div class="col"><div class="lbl">2024</div><div class="val">${fmtK(t24)}</div></div>
+          <div class="col"><div class="lbl">2025</div><div class="val">${fmtK(t25)}</div></div>
+          <div class="col"><div class="lbl">2026</div><div class="val">${fmtK(t26)}</div></div>
+        </div>
+      </div>
+      <div class="agente-body">
+        <table class="cli-tbl">
+          <tr><th>Cliente</th><th class="num">${colLabels(ag)[0]}</th><th class="num">${colLabels(ag)[1]}</th><th class="num">${colLabels(ag)[2]}</th><th class="ctr">Trend</th><th class="ctr">Opp</th><th class="ctr">Potenz.</th></tr>
+          ${rows}
+        </table>
+      </div>
+    </div>`;
+  });
+  document.getElementById('agentiList').innerHTML=h;
+  document.querySelectorAll('.andrea-box textarea').forEach(t=>t.addEventListener('input',salvaNote));
+}
+function toggleCli(cid){
+  const row=document.getElementById('cli_'+cid);
+  row.classList.toggle('open');
+  const d=row.nextElementSibling;
+  if(d&&d.classList.contains('cli-detail'))d.classList.toggle('show');
+  event.stopPropagation();
+}
+function toggleAll(open){
+  document.querySelectorAll('.agente-block').forEach(b=>open?b.classList.add('open'):b.classList.remove('open'));
+}
+function salvaNote(){
+  const data={};
+  document.querySelectorAll('.andrea-box textarea').forEach(t=>{if(t.value.trim())data[t.dataset.cli]=t.value;});
+  localStorage.setItem('note_andrea_v3',JSON.stringify(data));
+}
+function esportaNote(){
+  const data=JSON.parse(localStorage.getItem('note_andrea_v3')||'{}');
+  let txt='NOTE ANDREA\n'+'='.repeat(40)+'\n\n';
+  if(!Object.keys(data).length)txt+='(nessuna nota)';
+  else for(const[k,v]of Object.entries(data)){const[ag,cli]=k.split('||');txt+=`▶ [${ag}] ${cli}\n${v}\n\n`;}
+  navigator.clipboard.writeText(txt).then(()=>alert('Note copiate!')).catch(()=>{const w=window.open('','_blank');w.document.write('<pre>'+txt+'</pre>');});
+}
+
+// ---------- PRODOTTI ----------
+function getProdData(){return JSON.parse(localStorage.getItem('prodotti_v3')||'{}');}
+function renderMatrix(){
+  const filtro=document.getElementById('prodAgente').value;
+  const pd=getProdData();
+  // legenda
+  let leg='';
+  PRODUCTS.forEach(p=>leg+=`<span><span class="ic">${PROD_ICONS[p]}</span>${p}</span>`);
+  document.getElementById('prodLegend').innerHTML=leg;
+  // header
+  let head='<tr><th style="text-align:left">Cliente</th>';
+  PRODUCTS.forEach(p=>head+=`<th class="rot">${p}</th>`);
+  head+='<th class="ctr">2025</th></tr>';
+  // righe
+  let rows='';
+  Object.entries(SALES).forEach(([ag,cl])=>{
+    if(filtro!=='all'&&filtro!==ag)return;
+    [...cl].sort((x,y)=>y.y2025-x.y2025).forEach(c=>{
+      const key=ag+'||'+c.nome;
+      rows+=`<tr><td class="name">${c.nome}<span class="agtag">${ag}</span></td>`;
+      PRODUCTS.forEach(p=>{
+        const on=pd[key]&&pd[key][p];
+        rows+=`<td><span class="mcell ${on?'on':''}" onclick="toggleProd('${key}','${p}',this)">${on?'✔':'○'}</span></td>`;
+      });
+      rows+=`<td class="ctr" style="font-weight:600;color:#1F4E78">${fmtK(c.y2025)}</td></tr>`;
+    });
+  });
+  document.getElementById('matrixTbl').innerHTML=head+rows;
+}
+function toggleProd(key,prod,el){
+  const pd=getProdData();
+  if(!pd[key])pd[key]={};
+  pd[key][prod]=!pd[key][prod];
+  localStorage.setItem('prodotti_v3',JSON.stringify(pd));
+  el.classList.toggle('on');
+  el.textContent=pd[key][prod]?'✔':'○';
+}
+function salvaProdotti(){alert('Mappa prodotti salvata su questo dispositivo!');}
+function esportaCross(){
+  const pd=getProdData();
+  let txt='OPPORTUNITÀ CROSS-SELL (prodotti NON ancora forniti)\n'+'='.repeat(50)+'\n\n';
+  Object.entries(SALES).forEach(([ag,cl])=>{
+    cl.forEach(c=>{
+      const key=ag+'||'+c.nome;
+      const has=pd[key]||{};
+      const mancanti=PRODUCTS.filter(p=>!has[p]);
+      const forniti=PRODUCTS.filter(p=>has[p]);
+      if(forniti.length>0&&mancanti.length>0){
+        txt+=`▶ [${ag}] ${c.nome} (${fmtK(c.y2025)})\n  Fornite: ${forniti.join(', ')}\n  DA PROPORRE: ${mancanti.join(', ')}\n\n`;
+      }
+    });
+  });
+  navigator.clipboard.writeText(txt).then(()=>alert('Opportunità cross-sell copiate!')).catch(()=>{const w=window.open('','_blank');w.document.write('<pre>'+txt+'</pre>');});
+}
+
+// ---------- GRUPPO ----------
+function trendG(a,b){const d=b-a;const pct=a>0?(d/a*100):(b>0?100:0);let cls=d>5000?'up':d<-5000?'down':'flat';let ar=d>5000?'🟢':d<-5000?'🔴':'🟡';return{cls,ar,pct};}
+function renderG(filter='all'){
+  let h='';
+  GRUPPI.forEach((g,i)=>{
+    const t=trendG(g.y2024,g.y2025);
+    if(filter==='up'&&t.cls!=='up')return;
+    if(filter==='down'&&t.cls!=='down')return;
+    let cli='';
+    g.clienti.forEach(c=>{if(!c.y2023&&!c.y2024&&!c.y2025)return;const ct=trendG(c.y2024,c.y2025);
+      cli+=`<div style="display:flex;justify-content:space-between;padding:8px 16px 8px 38px;border-top:1px solid #eee;font-size:12px"><div style="flex:1;color:#555">${c.nome}</div><div style="display:flex;gap:20px"><span style="min-width:70px;text-align:right">${fmtK(c.y2023)}</span><span style="min-width:70px;text-align:right">${fmtK(c.y2024)}</span><span style="min-width:70px;text-align:right;font-weight:600">${fmtK(c.y2025)}</span><span style="min-width:55px;text-align:right;font-weight:700;color:${ct.cls==='up'?'#27ae60':ct.cls==='down'?'#c0392b':'#e67e22'}">${ct.pct>0?'+':''}${ct.pct.toFixed(0)}%</span></div></div>`;});
+    h+=`<div style="border:1px solid #e0e0e0;border-radius:8px;margin-bottom:8px;overflow:hidden;border-left:6px solid ${t.cls==='up'?'#27ae60':t.cls==='down'?'#C0392B':'#e67e22'}">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;cursor:pointer;background:#fff" onclick="this.parentElement.querySelector('.gc').style.display=this.parentElement.querySelector('.gc').style.display==='none'?'block':'none'">
+        <div style="font-weight:bold;color:#1F4E78;font-size:14px">${t.ar} ${g.nome}</div>
+        <div style="display:flex;gap:20px;font-size:12.5px"><span style="min-width:70px;text-align:right">'23 ${fmtK(g.y2023)}</span><span style="min-width:70px;text-align:right">'24 ${fmtK(g.y2024)}</span><span style="min-width:70px;text-align:right;font-weight:600">'25 ${fmtK(g.y2025)}</span><span style="min-width:60px;text-align:center;padding:3px 6px;border-radius:5px;font-weight:700;background:${t.cls==='up'?'#e8f5e9':t.cls==='down'?'#fdeae7':'#fef5e7'};color:${t.cls==='up'?'#27ae60':t.cls==='down'?'#C0392B':'#e67e22'}">${t.pct>0?'+':''}${t.pct.toFixed(0)}%</span></div>
+      </div><div class="gc" style="display:none;background:#fafbfc">${cli}</div></div>`;
+  });
+  document.getElementById('groupsList').innerHTML=h;
+}
+function filtraG(f,b){document.querySelectorAll('#gruppo .fbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderG(f);}
+
+// INIT
+initHome();
+renderAgenti();
+renderMatrix();
+renderG();
+
+new Chart(document.getElementById('chHome'),{type:'bar',data:{labels:Object.keys(SALES),datasets:[{label:'2025',data:Object.values(SALES).map(cl=>cl.reduce((s,c)=>s+c.y2025,0)),backgroundColor:'#4472C4',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'€'+c.raw.toLocaleString('it-IT')}}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'€'+(v/1e3).toFixed(0)+'K'}}}}});
+
+new Chart(document.getElementById('chGruppo'),{type:'bar',data:{labels:['2023','2024','2025'],datasets:[{label:'Fatturato',data:TOT,backgroundColor:['#4472C4','#ED7D31','#C0392B'],borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'€'+(c.raw/1e6).toFixed(2)+'M'}}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'€'+(v/1e6).toFixed(0)+'M'}}}}});
+</script>
+</body></html>
